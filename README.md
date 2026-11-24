@@ -1,6 +1,6 @@
-# TaskFlow — Full-Stack Task Management Application
+# Task Manager — Full-Stack Task Management Application
 
-A responsive task management app built for the Pied Piper Innovation technical assignment.
+A responsive task management app 
 
 **Stack:** Next.js 14 (App Router) · React 18 · TypeScript · Tailwind CSS · TanStack Query · React Hook Form + Zod · Node.js · Express · PostgreSQL · Prisma
 
