@@ -1,6 +1,10 @@
 import { PaginationMeta } from "@/types/task";
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api";
+// On the server an internal API_URL may be used (e.g. inside Docker); the browser always uses NEXT_PUBLIC_API_URL.
+const BASE_URL =
+  (typeof window === "undefined" ? process.env.API_URL : undefined) ??
+  process.env.NEXT_PUBLIC_API_URL ??
+  "http://localhost:4000/api";
 
 export interface FieldError {
   field: string;
@@ -28,6 +32,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<ApiR
   let res: Response;
   try {
     res = await fetch(`${BASE_URL}${path}`, {
+      cache: "no-store", // never serve stale task data from Next's fetch cache
       ...init,
       headers: { "Content-Type": "application/json", ...init?.headers },
     });

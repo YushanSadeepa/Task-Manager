@@ -22,6 +22,8 @@ export class TaskController {
 
   create = wrap(async (req, res) => sendSuccess(res, await this.service.create(req.body), 201));
 
+  replace = wrap(async (req, res) => sendSuccess(res, await this.service.replace(req.params.id, req.body)));
+
   update = wrap(async (req, res) => sendSuccess(res, await this.service.update(req.params.id, req.body)));
 
   updateStatus = wrap(async (req, res) =>

@@ -30,5 +30,6 @@ CREATE INDEX "tasks_dueDate_idx" ON "tasks"("dueDate");
 -- CreateIndex
 CREATE INDEX "tasks_createdAt_idx" ON "tasks"("createdAt");
 
--- CreateIndex
-CREATE INDEX "tasks_title_idx" ON "tasks"("title");
+-- Hand-written constraint (Prisma cannot model CHECK constraints): defence in depth
+-- so a blank/very short title can never be stored even if the API layer is bypassed.
+ALTER TABLE "tasks" ADD CONSTRAINT "tasks_title_min_length" CHECK (char_length(btrim("title")) >= 3);

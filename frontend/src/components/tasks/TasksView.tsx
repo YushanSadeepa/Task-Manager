@@ -5,8 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus } from "lucide-react";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useTasks, useUpdateTaskStatus } from "@/hooks/useTasks";
-import { PAGE_SIZE, PRIORITY_OPTIONS, STATUS_OPTIONS } from "@/lib/constants";
-import { Task, TaskListParams, TaskPriority, TaskStatus } from "@/types/task";
+import { parseTaskParams } from "@/lib/taskParams";
+import { Task } from "@/types/task";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { EmptyState, ErrorState } from "@/components/ui/States";
@@ -16,24 +16,13 @@ import { TaskFilters } from "./TaskFilters";
 import { TaskFormModal } from "./TaskFormModal";
 import { TaskTable } from "./TaskTable";
 
-const pick = <T extends string>(value: string | null, allowed: readonly T[]): T | undefined =>
-  allowed.includes(value as T) ? (value as T) : undefined;
-
 export function TasksView() {
   const router = useRouter();
   const pathname = usePathname();
   const sp = useSearchParams();
 
   // Filter state lives in the URL: shareable, survives refresh, back button works.
-  const params: TaskListParams = {
-    search: sp.get("search") ?? "",
-    status: pick<TaskStatus>(sp.get("status"), STATUS_OPTIONS.map((o) => o.value)),
-    priority: pick<TaskPriority>(sp.get("priority"), PRIORITY_OPTIONS.map((o) => o.value)),
-    sortBy: pick(sp.get("sortBy"), ["createdAt", "dueDate"] as const) ?? "createdAt",
-    order: pick(sp.get("order"), ["asc", "desc"] as const) ?? "desc",
-    page: Math.max(1, Number(sp.get("page")) || 1),
-    limit: PAGE_SIZE,
-  };
+  const params = parseTaskParams((k) => sp.get(k));
 
   const setParams = useCallback(
     (partial: Record<string, string | undefined>) => {

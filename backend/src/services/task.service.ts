@@ -29,12 +29,24 @@ export class TaskService {
     return TaskMapper.toResponse(await this.repo.create(dto));
   }
 
+  /** PUT semantics: full replacement. Omitted optional fields are reset to null. */
+  async replace(id: string, dto: CreateTaskDto): Promise<TaskResponseDto> {
+    await this.ensureExists(id);
+    const task = await this.repo.update(id, {
+      ...dto,
+      description: dto.description ?? null,
+      dueDate: dto.dueDate ?? null,
+    });
+    return TaskMapper.toResponse(task);
+  }
+
+  /** PATCH semantics: only provided fields change. */
   async update(id: string, dto: UpdateTaskDto): Promise<TaskResponseDto> {
     await this.ensureExists(id);
     return TaskMapper.toResponse(await this.repo.update(id, dto));
   }
 
-  async updateStatus(id: string, status: UpdateTaskDto["status"]): Promise<TaskResponseDto> {
+  async updateStatus(id: string, status: NonNullable<UpdateTaskDto["status"]>): Promise<TaskResponseDto> {
     return this.update(id, { status });
   }
 

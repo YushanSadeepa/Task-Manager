@@ -1,0 +1,206 @@
+openapi: 3.0.3
+info:
+  title: TaskFlow API
+  version: 1.0.0
+  description: REST API for the Task Management application.
+servers:
+  - url: http://localhost:4000/api
+tags:
+  - name: Tasks
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200": { description: Service is up }
+  /tasks:
+    get:
+      tags: [Tasks]
+      summary: List tasks (search, filter, sort, paginate)
+      parameters:
+        - { in: query, name: search, schema: { type: string, maxLength: 150 }, description: Case-insensitive title search }
+        - { in: query, name: status, schema: { $ref: "#/components/schemas/TaskStatus" } }
+        - { in: query, name: priority, schema: { $ref: "#/components/schemas/TaskPriority" } }
+        - { in: query, name: sortBy, schema: { type: string, enum: [createdAt, dueDate], default: createdAt } }
+        - { in: query, name: order, schema: { type: string, enum: [asc, desc], default: desc } }
+        - { in: query, name: page, schema: { type: integer, minimum: 1, default: 1 } }
+        - { in: query, name: limit, schema: { type: integer, minimum: 1, maximum: 100, default: 10 } }
+      responses:
+        "200":
+          description: Paginated list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  data: { type: array, items: { $ref: "#/components/schemas/Task" } }
+                  meta: { $ref: "#/components/schemas/PaginationMeta" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+    post:
+      tags: [Tasks]
+      summary: Create a task
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskInput" }
+      responses:
+        "201": { $ref: "#/components/responses/TaskResponse" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+  /tasks/stats:
+    get:
+      tags: [Tasks]
+      summary: Dashboard statistics
+      responses:
+        "200":
+          description: Counts by status and priority, plus overdue tasks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data: { $ref: "#/components/schemas/TaskStats" }
+  /tasks/{id}:
+    parameters:
+      - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [Tasks]
+      summary: Get task details
+      responses:
+        "200": { $ref: "#/components/responses/TaskResponse" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      tags: [Tasks]
+      summary: Replace a task (omitted optional fields are reset)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskInput" }
+      responses:
+        "200": { $ref: "#/components/responses/TaskResponse" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    patch:
+      tags: [Tasks]
+      summary: Partially update a task (at least one field)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TaskPatch" }
+      responses:
+        "200": { $ref: "#/components/responses/TaskResponse" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      tags: [Tasks]
+      summary: Delete a task
+      responses:
+        "204": { description: Deleted }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /tasks/{id}/status:
+    patch:
+      tags: [Tasks]
+      summary: Update only the status
+      parameters:
+        - { in: path, name: id, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { $ref: "#/components/schemas/TaskStatus" }
+      responses:
+        "200": { $ref: "#/components/responses/TaskResponse" }
+        "400": { $ref: "#/components/responses/ValidationError" }
+        "404": { $ref: "#/components/responses/NotFound" }
+components:
+  schemas:
+    TaskStatus: { type: string, enum: [TODO, IN_PROGRESS, COMPLETED] }
+    TaskPriority: { type: string, enum: [LOW, MEDIUM, HIGH] }
+    Task:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        description: { type: string, nullable: true }
+        status: { $ref: "#/components/schemas/TaskStatus" }
+        priority: { $ref: "#/components/schemas/TaskPriority" }
+        dueDate: { type: string, format: date-time, nullable: true }
+        isOverdue: { type: boolean, description: Past due and not completed }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    TaskInput:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, minLength: 3, maxLength: 150 }
+        description: { type: string, maxLength: 2000, nullable: true }
+        status: { $ref: "#/components/schemas/TaskStatus" }
+        priority: { $ref: "#/components/schemas/TaskPriority" }
+        dueDate: { type: string, format: date-time, nullable: true }
+    TaskPatch:
+      type: object
+      minProperties: 1
+      properties:
+        title: { type: string, minLength: 3, maxLength: 150 }
+        description: { type: string, maxLength: 2000, nullable: true }
+        status: { $ref: "#/components/schemas/TaskStatus" }
+        priority: { $ref: "#/components/schemas/TaskPriority" }
+        dueDate: { type: string, format: date-time, nullable: true }
+    PaginationMeta:
+      type: object
+      properties:
+        page: { type: integer }
+        limit: { type: integer }
+        total: { type: integer }
+        totalPages: { type: integer }
+    TaskStats:
+      type: object
+      properties:
+        total: { type: integer }
+        overdue: { type: integer }
+        byStatus: { type: object, additionalProperties: { type: integer } }
+        byPriority: { type: object, additionalProperties: { type: integer } }
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        error:
+          type: object
+          properties:
+            message: { type: string }
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field: { type: string }
+                  message: { type: string }
+  responses:
+    TaskResponse:
+      description: A single task
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean, example: true }
+              data: { $ref: "#/components/schemas/Task" }
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Task not found
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }

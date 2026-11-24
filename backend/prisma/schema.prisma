@@ -33,6 +33,5 @@ model Task {
   @@index([priority])
   @@index([dueDate])
   @@index([createdAt])
-  @@index([title])
   @@map("tasks")
 }

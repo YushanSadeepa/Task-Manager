@@ -1,8 +1,9 @@
 import { createApp } from "./app";
 import { env } from "./config/env";
+import { taskController } from "./container";
 import { prisma } from "./lib/prisma";
 
-const server = createApp().listen(env.PORT, () => {
+const server = createApp(taskController).listen(env.PORT, () => {
   console.log(`API running on http://localhost:${env.PORT}/api (${env.NODE_ENV})`);
 });
 
