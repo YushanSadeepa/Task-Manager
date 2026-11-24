@@ -7,7 +7,7 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "TaskFlow — Task Management",
+  title: "Task Manager ",
   description: "Full-stack task management application",
 };
 

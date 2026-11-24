@@ -19,7 +19,7 @@ export function Navbar() {
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
           <CheckSquare className="h-5 w-5 text-indigo-600" aria-hidden />
-          TaskFlow
+          Task Manager
         </Link>
         <nav aria-label="Main" className="flex items-center gap-1">
           {links.map((l) => {
